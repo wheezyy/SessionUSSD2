@@ -19,7 +19,7 @@ cordova plugin add https://github.com/rmxakalogistik/cordova-plugin-VoIpUSSD.git
     <meta-data android:name="android.accessibilityservice" android:resource="@xml/ussd_service" />
 </service>
 ```
-* Add bellow dependencies:
+* Add below dependencies:
 ```
 <uses-permission android:name="android.permission.CALL_PHONE" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
