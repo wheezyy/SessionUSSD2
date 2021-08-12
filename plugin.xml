@@ -4,12 +4,12 @@
         id="cordova-plugin-VoIpUSSD" version="0.0.1">
     <name>Ramy Mokako USSD Plugin</name>
 
-    <description>A android cordova plugin version of VoIpUSSD.</description>
+    <description>An android cordova plugin version of VoIpUSSD.</description>
     <license>MIT</license>
 
     <keywords>cordova,android,ussd</keywords>
-    <repo>https://github.com/rmxakalogistik/cordova-plugin-VoIpUSSD.git</repo>
-    <issue>https://github.com/rmxakalogistik/cordova-plugin-VoIpUSSD/issues</issue>
+    <repo>https://github.com/chogis/cordova-plugin-VoIpUSSD.git</repo>
+    <issue>https://github.com/chogis/cordova-plugin-VoIpUSSD/issues</issue>
   
     <engines>
         <engine name="cordova" version=">=3.0.0"/>
