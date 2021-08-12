@@ -1,329 +1,321 @@
-//package com.romellfudi.ussdlibrary;
-
 package com.ramymokako.plugin.ussd.android;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.net.Uri;
-import android.os.Build;
-import android.provider.Settings;
-import android.telecom.PhoneAccountHandle;
-import android.telecom.TelecomManager;
-import android.text.TextUtils;
-import android.view.accessibility.AccessibilityManager;
-import android.widget.Toast;
-
+import android.util.Log;
+import com.ramymokako.plugin.ussd.android.USSDController;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
 
-/**
- * @author Romell Dominguez
- * @version 1.1.c 27/09/2018
- * @since 1.0.a
- */
-public class USSDController implements USSDInterface, USSDApi {
+public class VoIpUSSD extends CordovaPlugin {
+    private static final int REQUEST_PERMISSION_REQ_CODE = 1;
+    private static final int SEND_SMS_REQ_CODE = 0;
+    public static String TAG = "USSDService";
+    public final String ACTION_HAS_PERMISSION = "has_permission";
+    public final String ACTION_REQUEST_PERMISSION = "request_permission";
+    public final String ACTION_SEND_SMS = "show";
+    private JSONArray _args;
+    CallbackContext callbackContext;
+    private Context context;
+    private HashMap<String, HashSet<String>> map;
+    public String[] res = {""};
+    private String result;
+    private USSDApi ussdApi;
 
-    protected static USSDController instance;
-
-    protected Context context;
-
-    protected HashMap<String, HashSet<String>> map;
-
-    protected CallbackInvoke callbackInvoke;
-
-    protected CallbackMessage callbackMessage;
-
-    protected static final String KEY_LOGIN = "KEY_LOGIN";
-
-    protected static final String KEY_ERROR = "KEY_ERROR";
-
-    protected Boolean isRunning = false;
-
-    private USSDInterface ussdInterface;
-
-    /**
-     * The Singleton building method
-     *
-     * @param context An activity that could call
-     * @return An instance of USSDController
-     */
-    public static USSDController getInstance(Context context) {
-        if (instance == null)
-            instance = new USSDController(context);
-        return instance;
-    }
-
-    private USSDController(Context context) {
-        ussdInterface = this;
-        this.context = context;
-    }
-
-    /**
-     * Invoke a dial-up calling a ussd number
-     *
-     * @param ussdPhoneNumber ussd number
-     * @param map             Map of Login and problem messages
-     * @param callbackInvoke  a callback object from return answer
-     */
-    public void callUSSDInvoke(String ussdPhoneNumber, HashMap<String, HashSet<String>> map, CallbackInvoke callbackInvoke) {
-        callUSSDInvoke(ussdPhoneNumber, 0, map, callbackInvoke);
-    }
-
-    /**
-     * Invoke a dial-up calling a ussd number and
-     * you had a overlay progress widget
-     *
-     * @param ussdPhoneNumber ussd number
-     * @param map             Map of Login and problem messages
-     * @param callbackInvoke  a callback object from return answer
-     */
-    public void callUSSDOverlayInvoke(String ussdPhoneNumber, HashMap<String, HashSet<String>> map, CallbackInvoke callbackInvoke) {
-        callUSSDOverlayInvoke(ussdPhoneNumber, 0, map, callbackInvoke);
-    }
-
-    /**
-     * Invoke a dial-up calling a ussd number
-     *
-     * @param ussdPhoneNumber ussd number
-     * @param simSlot         simSlot number to use
-     * @param map             Map of Login and problem messages
-     * @param callbackInvoke  a callback object from return answer
-     */
-    @SuppressLint("MissingPermission")
-    public void callUSSDInvoke(String ussdPhoneNumber, int simSlot, HashMap<String, HashSet<String>> map, CallbackInvoke callbackInvoke) {
-        this.callbackInvoke = callbackInvoke;
-        this.map = map;
-        if (verifyAccesibilityAccess(context)) {
-            dialUp(ussdPhoneNumber, simSlot);
-        } else {
-            this.callbackInvoke.over("Check your accessibility");
-        }
-    }
-
-    /**
-     * Invoke a dial-up calling a ussd number and
-     * you had a overlay progress widget
-     *
-     * @param ussdPhoneNumber ussd number
-     * @param simSlot         simSlot number to use
-     * @param map             Map of Login and problem messages
-     * @param callbackInvoke  a callback object from return answer
-     */
-    @SuppressLint("MissingPermission")
-    public void callUSSDOverlayInvoke(String ussdPhoneNumber, int simSlot, HashMap<String, HashSet<String>> map, CallbackInvoke callbackInvoke) {
-        this.callbackInvoke = callbackInvoke;
-        this.map = map;
-        if (verifyAccesibilityAccess(context) && verifyOverLay(context)) {
-            dialUp(ussdPhoneNumber, simSlot);
-        } else {
-            this.callbackInvoke.over("Check your accessibility | overlay permission");
-        }
-    }
-
-    private void dialUp(String ussdPhoneNumber, int simSlot) {
-        if (map == null || (!map.containsKey(KEY_ERROR) || !map.containsKey(KEY_LOGIN))) {
-            this.callbackInvoke.over("Bad Mapping structure");
-            return;
-        }
-        if (ussdPhoneNumber.isEmpty()) {
-            this.callbackInvoke.over("Bad ussd number");
-            return;
-        }
-        String uri = Uri.encode("#");
-        if (uri != null)
-            ussdPhoneNumber = ussdPhoneNumber.replace("#", uri);
-        Uri uriPhone = Uri.parse("tel:" + ussdPhoneNumber);
-        if (uriPhone != null)
-            isRunning = true;
-        this.context.startActivity(getActionCallIntent(uriPhone, simSlot));
-    }
-
-    /**
-     * get action call Intent
-     *
-     * @param uri     parsed uri to call
-     * @param simSlot simSlot number to use
-     */
-    @SuppressLint("MissingPermission")
-    private Intent getActionCallIntent(Uri uri, int simSlot) {
-        // https://stackoverflow.com/questions/25524476/make-call-using-a-specified-sim-in-a-dual-sim-device
-        final String simSlotName[] = {
-                "extra_asus_dial_use_dualsim",
-                "com.android.phone.extra.slot",
-                "slot",
-                "simslot",
-                "sim_slot",
-                "subscription",
-                "Subscription",
-                "phone",
-                "com.android.phone.DialingMode",
-                "simSlot",
-                "slot_id",
-                "simId",
-                "simnum",
-                "phone_type",
-                "slotId",
-                "slotIdx"
-        };
-
-        Intent intent = new Intent(Intent.ACTION_CALL, uri);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("com.android.phone.force.slot", true);
-        intent.putExtra("Cdma_Supp", true);
-
-        for (String s : simSlotName)
-            intent.putExtra(s, simSlot);
-
-        TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
-        if (telecomManager != null) {
-            List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
-            if (phoneAccountHandleList != null && phoneAccountHandleList.size() > simSlot)
-                intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", phoneAccountHandleList.get(simSlot));
-        }
-
-        return intent;
-    }
-
-    public void sendData(String text) {
-        USSDService.send(text);
-    }
-
-    public void send(String text, CallbackMessage callbackMessage) {
-        this.callbackMessage = callbackMessage;
-        ussdInterface.sendData(text);
-    }
-
-    public static boolean verifyAccesibilityAccess(Context context) {
-        boolean isEnabled = USSDController.isAccessiblityServicesEnable(context);
-        if (!isEnabled) {
-            if (context instanceof Activity) {
-                openSettingsAccessibility((Activity) context);
-            } else {
-                Toast.makeText(
-                        context,
-                        "voipUSSD accessibility service is not enabled",
-                        Toast.LENGTH_LONG
-                ).show();
+    public boolean execute(String str, JSONArray jSONArray, CallbackContext callbackContext2) throws JSONException {
+        HashMap<String, HashSet<String>> hashMap = new HashMap<>();
+        this.map = hashMap;
+        hashMap.put("KEY_LOGIN", new HashSet(Arrays.asList(new String[]{"espere", "waiting", "loading", "esperando"})));
+        this.map.put("KEY_ERROR", new HashSet(Arrays.asList(new String[]{"problema", "problem", "error", "null"})));
+        Activity activity = this.cordova.getActivity();
+        this.context = activity;
+        this.callbackContext = callbackContext2;
+        this._args = jSONArray;
+        this.ussdApi = USSDController.getInstance(activity);
+        this.result = "";
+        if (str.equals("show")) {
+            try {
+                String string = jSONArray.getJSONObject(0).getString("ussdCode");
+                if (hasPermission()) {
+                    executeSimpleUssd(string, callbackContext2);
+                    new PluginResult(PluginResult.Status.NO_RESULT).setKeepCallback(true);
+                    return true;
+                }
+                requestPermission(0);
+                return false;
+            } catch (JSONException e) {
+                callbackContext2.error("Error encountered: " + e.getMessage());
+                return false;
             }
-        }
-        return isEnabled;
-    }
-
-    public static boolean verifyOverLay(Context context) {
-        boolean m_android_doesnt_grant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && !Settings.canDrawOverlays(context);
-        if (m_android_doesnt_grant) {
-            if (context instanceof Activity) {
-                openSettingsOverlay((Activity) context);
-            } else {
-                Toast.makeText(context,
-                        "Overlay permission have not grant permission.",
-                        Toast.LENGTH_LONG).show();
+        } else if (str.equals("has_permission")) {
+            callbackContext2.sendPluginResult(new PluginResult(PluginResult.Status.OK, hasPermission()));
+            return false;
+        } else {
+            if (str.equals("request_permission")) {
+                requestPermission(1);
             }
             return false;
-        } else
-            return true;
+        }
     }
 
-    private static void openSettingsAccessibility(final Activity activity) {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
-        alertDialogBuilder.setTitle("USSD Accessibility permission");
-        ApplicationInfo applicationInfo = activity.getApplicationInfo();
-        int stringId = applicationInfo.labelRes;
-        String name = applicationInfo.labelRes == 0 ?
-                applicationInfo.nonLocalizedLabel.toString() : activity.getString(stringId);
-        alertDialogBuilder
-                .setMessage("You must enable accessibility permissions for the app '" + name + "'");
-        alertDialogBuilder.setCancelable(true);
-        alertDialogBuilder.setNeutralButton("ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                activity.startActivityForResult(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS), 1);
+    private void executeSimpleUssd(String str, CallbackContext callbackContext2) {
+        final int[] iArr = {0};
+        String[] split = str.split("-");
+        int parseInt = Integer.parseInt(split[0]);
+        final String[] split2 = split[1].split(",");
+        String str2 = split2[0];
+        final PluginResult[] pluginResultArr = new PluginResult[split2.length];
+        String str3 = TAG;
+        Log.d(str3, "PROCESSING " + str2);
+        final CallbackContext callbackContext3 = callbackContext2;
+        this.ussdApi.callUSSDInvoke(str2, parseInt, this.map, new USSDController.CallbackInvoke() {
+            public void responseInvoke(String str) {
+                Log.d(VoIpUSSD.TAG, "callUSSDInvoke/responseInvoke()");
+                VoIpUSSD.this.res[0] = str;
+                pluginResultArr[0] = new PluginResult(PluginResult.Status.OK, VoIpUSSD.this.res[0]);
+                pluginResultArr[0].setKeepCallback(true);
+                callbackContext3.sendPluginResult(pluginResultArr[0]);
+                VoIpUSSD voIpUSSD = VoIpUSSD.this;
+                voIpUSSD.doUSSDmenuOptions(split2, iArr, voIpUSSD.res, pluginResultArr);
+            }
+
+            public void over(String str) {
+                Log.d(VoIpUSSD.TAG, "callUSSDInvoke/over()");
+                String[] strArr = VoIpUSSD.this.res;
+                strArr[0] = str + "DONEENOD.";
+                pluginResultArr[0] = new PluginResult(PluginResult.Status.OK, VoIpUSSD.this.res[0]);
+                pluginResultArr[0].setKeepCallback(true);
+                callbackContext3.sendPluginResult(pluginResultArr[0]);
             }
         });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        if (alertDialog != null) {
-            alertDialog.show();
-        }
     }
 
-    private static void openSettingsOverlay(final Activity activity) {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activity);
-        alertDialogBuilder.setTitle("USSD Overlay permission");
-        ApplicationInfo applicationInfo = activity.getApplicationInfo();
-        int stringId = applicationInfo.labelRes;
-        String name = applicationInfo.labelRes == 0 ?
-                applicationInfo.nonLocalizedLabel.toString() : activity.getString(stringId);
-        alertDialogBuilder
-                .setMessage("You must allow for the app to appear '" + name + "' on top of other apps.");
-        alertDialogBuilder.setCancelable(true);
-        alertDialogBuilder.setNeutralButton("ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + activity.getPackageName()));
-                activity.startActivity(intent);
-            }
-        });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        if (alertDialog != null) {
-            alertDialog.show();
-        }
-    }
-
-
-    protected static boolean isAccessiblityServicesEnable(Context context) {
-        AccessibilityManager am = (AccessibilityManager) context
-                .getSystemService(Context.ACCESSIBILITY_SERVICE);
-        if (am != null) {
-            for (AccessibilityServiceInfo service : am.getInstalledAccessibilityServiceList()) {
-                if (service.getId().contains(context.getPackageName())) {
-                    return USSDController.isAccessibilitySettingsOn(context, service.getId());
-                }
-            }
-        }
-        return false;
-    }
-
-    protected static boolean isAccessibilitySettingsOn(Context context, final String service) {
-        int accessibilityEnabled = 0;
-        try {
-            accessibilityEnabled = Settings.Secure.getInt(
-                    context.getApplicationContext().getContentResolver(),
-                    android.provider.Settings.Secure.ACCESSIBILITY_ENABLED);
-        } catch (Settings.SettingNotFoundException e) {
-            //
-        }
-        if (accessibilityEnabled == 1) {
-            String settingValue = Settings.Secure.getString(
-                    context.getApplicationContext().getContentResolver(),
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            if (settingValue != null) {
-                TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter(':');
-                splitter.setString(settingValue);
-                while (splitter.hasNext()) {
-                    String accessabilityService = splitter.next();
-                    if (accessabilityService.equalsIgnoreCase(service)) {
-                        return true;
+    public void doUSSDmenuOptions(String[] strArr, int[] iArr, String[] strArr2, PluginResult[] pluginResultArr) {
+        iArr[0] = iArr[0] + 1;
+        if (iArr[0] < strArr.length) {
+            String str = TAG;
+            StringBuilder sb = new StringBuilder();
+            sb.append("COMMAND ");
+            sb.append(iArr[0]);
+            sb.append("/");
+            sb.append(strArr.length - 1);
+            sb.append(" - ");
+            sb.append(strArr[iArr[0]]);
+            Log.d(str, sb.toString());
+            final int[] iArr2 = iArr;
+            final String[] strArr3 = strArr;
+            final String[] strArr4 = strArr2;
+            final PluginResult[] pluginResultArr2 = pluginResultArr;
+            this.ussdApi.send(strArr[iArr[0]], new USSDController.CallbackMessage() {
+                public void responseMessage(String str) {
+                    if (iArr2[0] == strArr3.length - 1) {
+                        str = str + "DONEENOD";
                     }
+                    strArr4[0] = str;
+                    pluginResultArr2[iArr2[0]] = new PluginResult(PluginResult.Status.OK, strArr4[0]);
+                    pluginResultArr2[iArr2[0]].setKeepCallback(true);
+                    VoIpUSSD.this.callbackContext.sendPluginResult(pluginResultArr2[iArr2[0]]);
+                    VoIpUSSD voIpUSSD = VoIpUSSD.this;
+                    voIpUSSD.doUSSDmenuOptions(strArr3, iArr2, voIpUSSD.res, pluginResultArr2);
                 }
+            });
+        }
+    }
+
+    private boolean hasPermission() {
+        return this.cordova.hasPermission("android.permission.CALL_PHONE") && this.cordova.hasPermission("android.permission.READ_PHONE_STATE");
+    }
+
+    private void requestPermission(int i) {
+        this.cordova.requestPermissions(this, i, new String[]{"android.permission.READ_PHONE_STATE", "android.permission.CALL_PHONE"});
+    }
+
+    public void onRequestPermissionResult(int i, String[] strArr, int[] iArr) throws JSONException {
+        for (int i2 : iArr) {
+            if (i2 == -1) {
+                this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "User has denied permission"));
+                return;
             }
         }
-        return false;
-    }
-
-    public interface CallbackInvoke {
-        void responseInvoke(String message);
-
-        void over(String message);
-    }
-
-    public interface CallbackMessage {
-        void responseMessage(String message);
+        if (i == 0) {
+            try {
+                executeSimpleUssd(this._args.getJSONObject(0).getString("ussdCode"), this.callbackContext);
+                new PluginResult(PluginResult.Status.NO_RESULT).setKeepCallback(true);
+            } catch (JSONException e) {
+                this.callbackContext.error("Error encountered: " + e.getMessage());
+            }
+        } else {
+            this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, true));
+        }
     }
 }
+
+
+// package com.ramymokako.plugin.ussd.android;
+
+// import android.Manifest.permission;
+// import android.content.Intent;
+// import android.os.Bundle;
+// //import android.support.annotation.NonNull;
+// //import android.support.annotation.Nullable;
+// import android.util.Log;
+// import android.widget.Toast;
+// import org.apache.cordova.CallbackContext;
+// import org.apache.cordova.CordovaPlugin;
+// import org.apache.cordova.PluginResult;
+// import org.json.JSONArray;
+// import org.json.JSONException;
+// import org.json.JSONObject;
+// import android.content.Context;
+// import org.json.JSONArray;
+// import org.json.JSONException;
+// import org.json.JSONObject;
+// import java.util.ArrayList;
+// import java.util.Arrays;
+// import java.util.HashMap;
+// import java.util.HashSet;
+// import android.content.pm.PackageManager;
+
+// //import io.sybox.easyshare.MainActivity; //(io.sybox.easyshare: this must be replaced by the name of your main package)
+
+// public class VoIpUSSD extends CordovaPlugin {
+
+//     private HashMap<String, HashSet<String>> map;
+//     private USSDApi ussdApi;
+//     private Context context;
+//     private String result;
+// 	public final String ACTION_SEND_SMS = "show";
+// 	public final String ACTION_HAS_PERMISSION = "has_permission";
+// 	public final String ACTION_REQUEST_PERMISSION = "request_permission";
+// 	private static final int SEND_SMS_REQ_CODE = 0;
+// 	private static final int REQUEST_PERMISSION_REQ_CODE = 1;
+// 	CallbackContext callbackContext;
+// 	private JSONArray _args;
+
+//     @Override
+//     public boolean execute(String action, final JSONArray args, final CallbackContext callbackContext) throws JSONException {
+	
+// 	    map = new HashMap<>();
+//         map.put("KEY_LOGIN", new HashSet<>(Arrays.asList("espere", "waiting", "loading", "esperando")));
+//         map.put("KEY_ERROR", new HashSet<>(Arrays.asList("problema", "problem", "error", "null")));
+//         this.context = cordova.getActivity();//.getApplicationContext();
+//         this.callbackContext =  callbackContext;
+// 		this._args = args;
+// 		ussdApi = USSDController.getInstance(this.context);
+// 		result = "";
+
+// 	    if (action.equals(ACTION_SEND_SMS)) {
+	    
+// 	        String ussdCode;
+//             try {
+//                  JSONObject options = args.getJSONObject(0);
+//                  ussdCode = options.getString("ussdCode");
+//             } catch (JSONException e) {
+//                 callbackContext.error("Error encountered: " + e.getMessage());
+//                 return false;
+//             }
+
+// 			if (hasPermission()) {
+// 			    executeSimpleUssd(ussdCode, callbackContext);
+// 				PluginResult pluginResult_NO_RESULT = new  PluginResult(PluginResult.Status.NO_RESULT); 
+// 				pluginResult_NO_RESULT.setKeepCallback(true);
+// 				return true;
+// 		    } else {
+// 				requestPermission(SEND_SMS_REQ_CODE);
+// 				return false;
+// 		    }
+// 	    }
+// 		else if (action.equals(ACTION_HAS_PERMISSION)) {
+// 			callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, hasPermission()));
+// 			return false;
+// 		}
+// 		else if (action.equals(ACTION_REQUEST_PERMISSION)) {
+// 			requestPermission(REQUEST_PERMISSION_REQ_CODE);
+// 			return false;
+// 		}
+// 		return false;
+//     }
+
+//     private void executeSimpleUssd(String phone, CallbackContext callbackContext){
+//         String phoneNumber = phone;
+//         ussdApi.callUSSDInvoke(phoneNumber, map, new USSDController.CallbackInvoke() {
+//             @Override
+//             public void responseInvoke(String message) {
+//                 result += "\n-\n" + message;
+// 				PluginResult result_1 = new PluginResult(PluginResult.Status.OK, result);
+// 				result_1.setKeepCallback(true);
+// 				callbackContext.sendPluginResult(result_1); 
+//                 // first option list - select option 1
+//                 ussdApi.send("1", new USSDController.CallbackMessage() {
+//                     @Override
+//                     public void responseMessage(String message) {
+//                         result += "\n-\n" + message;
+// 						PluginResult result_2 = new PluginResult(PluginResult.Status.OK, result);
+// 						result_2.setKeepCallback(true);
+// 						callbackContext.sendPluginResult(result_2); 
+//                         // second option list - select option 1
+//                         ussdApi.send("1", new USSDController.CallbackMessage() {
+//                             @Override
+//                             public void responseMessage(String message) {
+//                                 result += "\n-\n" + message;
+// 								PluginResult result_3  = new PluginResult(PluginResult.Status.OK, result);
+// 								result_3.setKeepCallback(true);
+// 								callbackContext.sendPluginResult(result_3); 
+//                             }
+//                         });
+//                     }
+//                 });
+
+//             }
+
+//             @Override
+//             public void over(String message) {
+//                 result += "\n-\n" + message;
+//             }
+//         });
+//     }
+
+// 	private boolean hasPermission() {
+// 		boolean gyg1 = cordova.hasPermission(android.Manifest.permission.CALL_PHONE);
+// 		boolean gyg2 = cordova.hasPermission(android.Manifest.permission.READ_PHONE_STATE);
+// 		return (gyg1 == true && gyg2 == true);
+// 	}
+
+// 	private void requestPermission(int requestCode) {
+// 		cordova.requestPermissions(this, requestCode, new String[]{android.Manifest.permission.READ_PHONE_STATE, android.Manifest.permission.CALL_PHONE});
+// 	}
+
+// 	public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
+// 		for (int r : grantResults) {
+// 			if (r == PackageManager.PERMISSION_DENIED) {
+// 				this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "User has denied permission"));
+// 				return;
+// 			}
+// 		}
+// 		if (requestCode == SEND_SMS_REQ_CODE) {
+		
+//             String ussdCode;
+//             try {
+//                  JSONObject options = this._args.getJSONObject(0);
+//                  ussdCode = options.getString("ussdCode");
+//             } catch (JSONException e) {
+//                  this.callbackContext.error("Error encountered: " + e.getMessage());
+//                  return;
+//             }
+			
+// 			executeSimpleUssd(ussdCode, this.callbackContext);
+// 			PluginResult pluginResult_NO_RESULT = new  PluginResult(PluginResult.Status.NO_RESULT); 
+// 			pluginResult_NO_RESULT.setKeepCallback(true);
+// 			return;
+// 		}
+// 		this.callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, true));
+// 	}
+
+
+// }
