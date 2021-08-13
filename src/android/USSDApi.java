@@ -4,7 +4,7 @@
  * porfile.romellfudi.com
  */
 
-package com.romellfudi.ussdlibrary;
+package com.ramymokako.plugin.ussd.android;
 
 import java.util.HashMap;
 import java.util.HashSet;
