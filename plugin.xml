@@ -2,14 +2,14 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-VoIpUSSD" version="0.0.1">
-    <name>Ramy Mokako USSD Plugin</name>
+    <name>Chogis Cho USSD Plugin</name>
 
     <description>An android cordova plugin version of VoIpUSSD.</description>
     <license>MIT</license>
 
     <keywords>cordova,android,ussd</keywords>
-    <repo>https://github.com/chogis/cordova-plugin-VoIpUSSD.git</repo>
-    <issue>https://github.com/chogis/cordova-plugin-VoIpUSSD/issues</issue>
+    <repo>https://github.com/chogis/SessionUSSD2.git</repo>
+    <issue>https://github.com/chogis/SessionUSSD2/issues</issue>
   
     <engines>
         <engine name="cordova" version=">=3.0.0"/>
