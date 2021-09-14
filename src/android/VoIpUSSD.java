@@ -3,7 +3,7 @@ package com.ramymokako.plugin.ussd.android;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-// import com.ramymokako.plugin.ussd.android.USSDController;
+import com.ramymokako.plugin.ussd.android.USSDController;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
