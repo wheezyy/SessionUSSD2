@@ -13,7 +13,7 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 * Add service:
 ```
     <service
-        android:name="com.romellfudi.ussdlibrary.USSDService"
+        android:name="com.ramymokako.plugin.ussd.android.USSDService"
         android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
         <intent-filter>
             <action android:name="android.accessibilityservice.AccessibilityService" />
