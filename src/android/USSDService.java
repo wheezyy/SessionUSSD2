@@ -51,21 +51,21 @@ public class USSDService extends AccessibilityService {
             return;
         }
 
+        String response = event.getText().toString();
         if (LoginView(event) && notInputText(event)) {
             // first view or logView, do nothing, pass / FIRST MESSAGE
             clickOnButton(event, 0);
             USSDController.instance.isRunning = false;
-            USSDController.instance.callbackInvoke.over(event.getText().get(0).toString());
+            USSDController.instance.callbackInvoke.over(response);
         } else if (problemView(event) || LoginView(event)) {
             // deal down
             clickOnButton(event, 1);
-            USSDController.instance.callbackInvoke.over(event.getText().get(0).toString());
+            USSDController.instance.callbackInvoke.over(response);
         } else if (isUSSDWidget(event)) {
             // ready for work
-            String response = event.getText().get(0).toString();
-            if (response.contains("\n")) {
-                response = response.substring(response.indexOf('\n') + 1);
-            }
+//            if (response.contains("\n")) {
+//                response = response.substring(response.indexOf('\n') + 1);
+//            }
             if (notInputText(event)) {
                 // not more input panels / LAST MESSAGE
                 // sent 'OK' button
@@ -74,12 +74,12 @@ public class USSDService extends AccessibilityService {
                 USSDController.instance.callbackInvoke.over(response);
             } else {
                 // sent option 1
-                if (USSDController.instance.callbackMessage == null)
-                    USSDController.instance.callbackInvoke.responseInvoke(response);
-                else {
+                //                    USSDController.instance.callbackInvoke = null;
+                //                    USSDController.instance.callbackMessage = null;
+                if (USSDController.instance.send)
                     USSDController.instance.callbackMessage.responseMessage(response);
-                    USSDController.instance.callbackMessage = null;
-                }
+                else
+                    USSDController.instance.callbackInvoke.responseInvoke(response);
             }
         }
 
@@ -151,7 +151,10 @@ public class USSDService extends AccessibilityService {
      */
     private boolean isUSSDWidget(AccessibilityEvent event) {
         return (event.getClassName().equals("amigo.app.AmigoAlertDialog")
-                || event.getClassName().equals("android.app.AlertDialog"));
+                || event.getClassName().equals("android.app.AlertDialog")
+                || event.getClassName().equals("com.android.phone.oppo.settings.LocalAlertDialog")
+                || event.getClassName().equals("com.zte.mifavor.widget.AlertDialog")
+                || event.getClassName().equals("color.support.v7.app.AlertDialog"));
     }
 
     /**
