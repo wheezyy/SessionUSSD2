@@ -88,7 +88,7 @@ public class VoIpUSSD extends CordovaPlugin {
             public void over(String str) {
                 Log.d(VoIpUSSD.TAG, "callUSSDInvoke/over()");
                 String[] strArr = VoIpUSSD.this.res;
-                strArr[0] = str + "DONEENOD.";
+                strArr[0] = str + "DONEENOD";
                 pluginResultArr[0] = new PluginResult(PluginResult.Status.OK, VoIpUSSD.this.res[0]);
                 pluginResultArr[0].setKeepCallback(true);
                 callbackContext3.sendPluginResult(pluginResultArr[0]);
