@@ -56,7 +56,7 @@ public class SplashLoadingService extends Service {
         int padding_in_px = (int) (padding_in_dp * scale + 0.5f);
 
         layout = new LinearLayout(this);
-        layout.setBackgroundColor(R.color.blue_background);
+        //layout.setBackgroundColor(R.color.blue_background);
         layout.setOrientation(LinearLayout.VERTICAL);
 
         WindowManager.LayoutParams params =
@@ -69,7 +69,7 @@ public class SplashLoadingService extends Service {
                                 PixelFormat.RGB_565);
 
         ImageView imageView = new ImageView(this);
-        imageView.setImageResource(R.drawable.favico);
+        //imageView.setImageResource(R.drawable.favico);
         imageView.setPaddingRelative(0,padding_in_px,0,padding_in_px);
         LinearLayout.LayoutParams params_ll = new LinearLayout
                 .LayoutParams(LinearLayout.MarginLayoutParams.MATCH_PARENT, 0);
@@ -85,7 +85,7 @@ public class SplashLoadingService extends Service {
         layout.addView(relativeLayout, params_ll);
 
         GifImageView gifImageView = new GifImageView(this);
-        gifImageView.setGifImageResource(R.drawable.loading);
+        //gifImageView.setGifImageResource(R.drawable.loading);
         gifImageView.setPaddingRelative(0,padding_in_px,0,padding_in_px);
 
         relativeLayout = new RelativeLayout(this);
