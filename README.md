@@ -9,7 +9,8 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 
 
 ## Configuration
-### On *AndroidManifest.xml* file
+### Copy *AndroidManifest.xml* file or use sections labelled  ```<!-- USE HERE  -->
+```
 * Add service (see sample file in list):
 ```
     <service
