@@ -7,6 +7,7 @@
 package com.ramymokako.plugin.ussd.android;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.util.Log;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -18,7 +19,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.telecom.PhoneAccountHandle;
+import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
+
+// import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.Toast;
@@ -34,6 +40,7 @@ import java.util.List;
  */
 public class USSDController implements USSDInterface, USSDApi {
 
+    private static String TAG = "tesitoUSSDController";
     protected static USSDController instance;
 
     protected Context context;
@@ -188,11 +195,20 @@ public class USSDController implements USSDInterface, USSDApi {
         for (String s : simSlotName)
             intent.putExtra(s, simSlot);
 
+// SubscriptionManager subscriptionManager = SubscriptionManager.from(context);
+// for ( SubscriptionInfo subscriptionInfo : subscriptionManager.getActiveSubscriptionInfoList()) {
+//     Log.d("tesito", "subscriptionInfo.getSimSlotIndex(): " + subscriptionInfo.getSimSlotIndex());
+//     Log.d("tesito", "subscriptionInfo.getCarrierId(): " + subscriptionInfo.getCarrierId());
+//     Log.d("tesito", "subscriptionInfo.getMnc(): " + subscriptionInfo.getMnc());
+//     Log.d("tesito", "subscriptionInfo.getMccString(): " + subscriptionInfo.getMccString());
+// }            
+
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
         if (telecomManager != null) {
             List<PhoneAccountHandle> phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
-            if (phoneAccountHandleList != null && phoneAccountHandleList.size() > simSlot)
+            if (phoneAccountHandleList != null && phoneAccountHandleList.size() > simSlot){
                 intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", phoneAccountHandleList.get(simSlot));
+            }
         }
         return intent;
     }
@@ -202,6 +218,8 @@ public class USSDController implements USSDInterface, USSDApi {
      * @param text string which contains info to be sent
      */
     public void sendData(String text) {
+        Log.d(TAG, "sendData(String text) " + text);
+
         USSDService.send(text);
     }
 
@@ -212,6 +230,7 @@ public class USSDController implements USSDInterface, USSDApi {
      * @param callbackMessage response callback
      */
     public void send(String text, CallbackMessage callbackMessage) {
+        Log.d(TAG, "send(String text, CallbackMessage callbackMessage) " + text);
         this.callbackMessage = callbackMessage;
         this.send = true;
         ussdInterface.sendData(text);
@@ -222,6 +241,8 @@ public class USSDController implements USSDInterface, USSDApi {
      */
     @Override
     public void cancel() {
+        Log.d(TAG, "cancel()" );
+
         USSDService.cancel();
     }
 
