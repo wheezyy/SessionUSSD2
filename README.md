@@ -30,7 +30,7 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
-### Copy  **ussd_service.xml** to *res/xml/* folder
+### Copy  *ussd_service.xml* to *res/xml/* folder
 
 ## Usage
 ```
