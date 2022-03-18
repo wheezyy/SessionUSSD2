@@ -27,7 +27,8 @@ import java.util.List;
  */
 public class USSDService extends AccessibilityService {
 
-    private static String TAG = USSDService.class.getSimpleName();
+    // private static String TAG = USSDService.class.getSimpleName();
+    private static String TAG = "tesitoUSSDService";
 
     private static AccessibilityEvent event;
 
@@ -40,33 +41,42 @@ public class USSDService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         this.event = event;
 
-        Log.d(TAG, "onAccessibilityEvent");
+        // Log.d(TAG, "onAccessibilityEvent");
 
-        Log.d(TAG, String.format(
-                "onAccessibilityEvent: [type] %s [class] %s [package] %s [time] %s [text] %s",
-                event.getEventType(), event.getClassName(), event.getPackageName(),
-                event.getEventTime(), event.getText()));
+        // Log.d(TAG, String.format(
+        //         "onAccessibilityEvent: [type] %s [class] %s [package] %s [time] %s [text] %s",
+        //         event.getEventType(), event.getClassName(), event.getPackageName(),
+        //         event.getEventTime(), event.getText()));
+
+        Log.d(TAG, String.format("[class] %s", event.getClassName()));
 
         if (USSDController.instance == null || !USSDController.instance.isRunning) {
             return;
         }
 
         String response = event.getText().toString();
+        // Log.d(TAG, "response " + response);
         if (LoginView(event) && notInputText(event)) {
+        Log.d(TAG, "if (LoginView(event) && notInputText(event)) ");
             // first view or logView, do nothing, pass / FIRST MESSAGE
             clickOnButton(event, 0);
             USSDController.instance.isRunning = false;
             USSDController.instance.callbackInvoke.over(response);
         } else if (problemView(event) || LoginView(event)) {
+        Log.d(TAG, "else if (problemView(event) || LoginView(event)) ");
             // deal down
             clickOnButton(event, 1);
             USSDController.instance.callbackInvoke.over(response);
         } else if (isUSSDWidget(event)) {
+        Log.d(TAG, " else if (isUSSDWidget(event)) ");
+
             // ready for work
 //            if (response.contains("\n")) {
 //                response = response.substring(response.indexOf('\n') + 1);
 //            }
             if (notInputText(event)) {
+                Log.d(TAG, " if (notInputText(event)) ");
+
                 // not more input panels / LAST MESSAGE
                 // sent 'OK' button
                 clickOnButton(event, 0);
@@ -150,11 +160,13 @@ public class USSDService extends AccessibilityService {
      * @return boolean AccessibilityEvent is USSD
      */
     private boolean isUSSDWidget(AccessibilityEvent event) {
-        return (event.getClassName().equals("amigo.app.AmigoAlertDialog")
+        boolean res = (event.getClassName().equals("amigo.app.AmigoAlertDialog")
                 || event.getClassName().equals("android.app.AlertDialog")
                 || event.getClassName().equals("com.android.phone.oppo.settings.LocalAlertDialog")
                 || event.getClassName().equals("com.zte.mifavor.widget.AlertDialog")
                 || event.getClassName().equals("color.support.v7.app.AlertDialog"));
+                // Log.d(TAG, "isUSSDWidget(AccessibilityEvent event)" + res + " : " + event.getClassName());
+        return res;
     }
 
     /**
@@ -164,9 +176,11 @@ public class USSDService extends AccessibilityService {
      * @return boolean USSD Widget has login message
      */
     private boolean LoginView(AccessibilityEvent event) {
-        return isUSSDWidget(event)
+        boolean res = isUSSDWidget(event)
                 && USSDController.instance.map.get(USSDController.KEY_LOGIN)
                 .contains(event.getText().get(0).toString());
+        // Log.d(TAG, "LoginView(AccessibilityEvent event) " + res + " : " + event.getText().get(0).toString());
+                return res;
     }
 
     /**
@@ -190,6 +204,7 @@ public class USSDService extends AccessibilityService {
     protected static void clickOnButton(AccessibilityEvent event, int index) {
         int count = -1;
         for (AccessibilityNodeInfo leaf : getLeaves(event)) {
+            Log.d(TAG, "for (AccessibilityNodeInfo leaf : getLeaves(event))  " + leaf.getClassName().toString().toLowerCase());
             if (leaf.getClassName().toString().toLowerCase().contains("button")) {
                 count++;
                 if (count == index) {
