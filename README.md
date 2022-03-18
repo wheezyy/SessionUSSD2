@@ -9,20 +9,23 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 
 
 ## Configuration
-### Copy *AndroidManifest.xml* file or use sections labelled  <!-- USE HERE  -->
+### Copy *AndroidManifest.xml* file or use sections labelled
 
-* Add service (see sample file in list):
 ```
-    <service
-        android:name="com.ramymokako.plugin.ussd.android.USSDService"
-        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-        <intent-filter>
-            <action android:name="android.accessibilityservice.AccessibilityService" />
-        </intent-filter>
-        <meta-data
-            android:name="android.accessibilityservice"
-            android:resource="@xml/ussd_service" />
-    </service>
+<!-- USE HERE  -->
+        <service android:name="com.ramymokako.plugin.ussd.android.USSDService" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/ussd_service" />
+        </service>
+<!-- END HERE -->
+
+<!-- USE HERE  -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+<!-- END HERE -->
 
 ```
 * Add below dependencies (see AndroidManifest.xml sample file):
