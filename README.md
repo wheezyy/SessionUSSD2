@@ -10,7 +10,7 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 
 ## Configuration
 ### On *AndroidManifest.xml* file
-* Add service:
+* Add service (see sample file in list):
 ```
     <service
         android:name="com.ramymokako.plugin.ussd.android.USSDService"
@@ -24,33 +24,14 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
     </service>
 
 ```
-* Add below dependencies:
+* Add below dependencies (see AndroidManifest.xml sample file):
 ```
 <uses-permission android:name="android.permission.CALL_PHONE" />
 <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
-### On *res/xml/* folder
-* Create empty **ussd_service.xml** file and insert bellow:
-```
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Copyright (c) 2020. BoostTag E.I.R.L. Romell D.Z.
-  ~ All rights reserved
-  ~ porfile.romellfudi.com
-  -->
+### Copy  **ussd_service.xml** to *res/xml/* folder
 
-<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accessibilityEventTypes
-        ="typeWindowStateChanged"
-    android:packageNames="com.android.phone"
-    android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault"
-    android:canRetrieveWindowContent="true"
-    android:description="@string/accessibility_service_description"
-    android:notificationTimeout="0"/>
-    <!--|typeViewTextChanged-->
-```
 ## Usage
 ```
 window.plugins.voIpUSSD.show('*105#', function (data) {
