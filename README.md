@@ -1,5 +1,6 @@
-# cordova-plugin-VoIpUSSD
-A cordova plugin version of VoIpUSSD: https://github.com/romellfudi/VoIpUSSD
+# cordova-plugin-SessionUSSD2
+A cordova plugin to handle USSD menus options.
+
 
 ## Installation
 
@@ -28,22 +29,21 @@ cordova plugin add https://github.com/chogis/SessionUSSD2.git
 <!-- END HERE -->
 
 ```
-* Add below dependencies (see AndroidManifest.xml sample file):
-```
-<uses-permission android:name="android.permission.CALL_PHONE" />
-<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-<uses-permission android:name="android.permission.READ_PHONE_STATE" />
-```
+
 ### Copy  *ussd_service.xml* to *res/xml/* folder
 
 ## Usage
 ```
-window.plugins.voIpUSSD.show('*105#', function (data) {
-   console.log('USSD Success: ' + data);
-}, function (err) {
-   console.log('USSD Error: ' + err);
-});
+const ussdMenuString = "*105#,1,2,3,4"
+try {
+  const menuResponses = await window.plugins.voIpUSSD.show(ussdMenuString)
+} catch (error) {
+  console.log(error)
+}
 ```
 ## Authors
 
-* **Chogis Cho** - *Initial work* - [Romell Domínguez](https://github.com/romellfudi/VoIpUSSD/#by-romell-dominguez)
+* **Chogis Cho**
+* [Romell Domínguez](https://github.com/romellfudi/VoIpUSSD/) - *VoIpUSSD*
+* [Ramy Mokako](https://github.com/rmxakalogistik/cordova-plugin-VoIpUSSD) - *VoIpUSSD cordova plugin*
+
