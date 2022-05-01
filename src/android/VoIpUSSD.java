@@ -107,8 +107,6 @@ public class VoIpUSSD extends CordovaPlugin {
         PluginResult[] pluginResult = new PluginResult[temp.length];
         final int cmdIndex = 2;
         final int noCmdIndex = 0;
-        
-        ussdApi.cancel();
 		
         Log.d(TAG, "before executeSimpleUssd/callUSSD: " + phoneNumber);
         ussdApi.callUSSDInvoke(phoneNumber, simSlot, map, new USSDController.CallbackInvoke() {
