@@ -81,10 +81,12 @@ public class VoIpUSSD extends CordovaPlugin {
             ussdApi.send(ussdCommands[index], new USSDController.CallbackMessage() {
                 @Override
                 public void responseMessage(String message) {
-                    if(index == ussdCommands.length - 2){
-                        message = message + "DONEENOD";
-			    ussdApi.cancel();
-                    }
+//                     if(index == ussdCommands.length - 2){
+//                         message = message + "DONEENOD";
+// 			    ussdApi.cancel();
+//                     }
+			
+			ussdApi.cancel();
                     Log.d(TAG, "###doUSSD### Received ### " + index + ": " + message);
                     pluginResult[index]  = new PluginResult(PluginResult.Status.OK, ussdCommands[index] + ": " + message);
                     pluginResult[index].setKeepCallback(true);
