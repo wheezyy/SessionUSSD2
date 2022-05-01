@@ -81,12 +81,12 @@ public class VoIpUSSD extends CordovaPlugin {
             ussdApi.send(ussdCommands[index], new USSDController.CallbackMessage() {
                 @Override
                 public void responseMessage(String message) {
-//                     if(index == ussdCommands.length - 2){
-//                         message = message + "DONEENOD";
-// 			    ussdApi.cancel();
-//                     }
+                    if(index == ussdCommands.length){
+                        message = message + "DONEENOD";
+			            ussdApi.cancel();
+                    }
 			
-			ussdApi.cancel();
+			
                     Log.d(TAG, "###doUSSD### Received ### " + index + ": " + message);
                     pluginResult[index]  = new PluginResult(PluginResult.Status.OK, ussdCommands[index] + ": " + message);
                     pluginResult[index].setKeepCallback(true);
@@ -107,8 +107,10 @@ public class VoIpUSSD extends CordovaPlugin {
         PluginResult[] pluginResult = new PluginResult[temp.length];
         final int cmdIndex = 2;
         final int noCmdIndex = 0;
-
-		Log.d(TAG, "before executeSimpleUssd/callUSSD: " + phoneNumber);
+        
+        ussdApi.cancel();
+		
+        Log.d(TAG, "before executeSimpleUssd/callUSSD: " + phoneNumber);
         ussdApi.callUSSDInvoke(phoneNumber, simSlot, map, new USSDController.CallbackInvoke() {
             @Override
             public void responseInvoke(String message) {
